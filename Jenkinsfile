@@ -40,16 +40,16 @@ pipeline {
                 }
             }
         }
-    }
 
-    stage('Code Quality') {
-        steps {
-            script {
-                echo 'Vérification du Quality Gate...'
-                // Cette ligne nécessite que tu aies installé le plugin SonarQube dans Jenkins
-                def qg = waitForQualityGate()
-                if (qg.status != 'OK') {
-                    error "Quality Gate failed: ${qg.status}"
+        stage('Code Quality') {
+            steps {
+                script {
+                    echo 'Vérification du Quality Gate...'
+                    // Nécessite le plugin SonarQube pour Jenkins
+                    def qg = waitForQualityGate()
+                    if (qg.status != 'OK') {
+                        error "Quality Gate failed: ${qg.status}"
+                    }
                 }
             }
         }
