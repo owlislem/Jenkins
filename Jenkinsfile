@@ -2,9 +2,6 @@ pipeline {
     agent any
 
     stages {
-        // =========================
-        // 1️⃣ TEST UNITAIRES + CUCUMBER
-        // =========================
         stage('Test') {
             steps {
                 script {
@@ -17,7 +14,6 @@ pipeline {
                     echo 'Génération des rapports Cucumber...'
                     bat 'gradlew.bat generateCucumberReports'
 
-                    echo 'Publication des rapports Cucumber dans Jenkins...'
                     publishHTML(target: [
                         reportName: 'Cucumber Report',
                         reportDir: 'build/reports/cucumber/cucumber-html-reports',
@@ -30,34 +26,23 @@ pipeline {
             }
         }
 
-        // =========================
-        // 2️⃣ ANALYSE SONARQUBE
-        // =========================
         stage('Code Analysis') {
             steps {
                 script {
                     echo 'Analyse du code avec SonarQube...'
-                    // Utilise withSonarQubeEnv pour lier ton serveur configuré dans Jenkins
-                    withSonarQubeEnv('MySonarQubeServer') { // Remplace par le nom de ton serveur Sonar
+                    // Lier ton serveur Jenkins SonarQube
+                    withSonarQubeEnv('MySonarQubeServer') {
                         bat 'gradlew.bat sonarqube'
                     }
                 }
             }
-            post {
-                failure {
-                    echo "Code Analysis failed. Check SonarQube report."
-                }
-            }
         }
 
-        // =========================
-        // 3️⃣ VERIFICATION QUALITY GATE
-        // =========================
         stage('Code Quality') {
             steps {
                 script {
                     echo 'Vérification du Quality Gate...'
-                    def qg = waitForQualityGate()
+                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube ait fini
                     if (qg.status != 'OK') {
                         error "Quality Gate failed: ${qg.status}"
                     }
