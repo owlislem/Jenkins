@@ -6,7 +6,7 @@ pipeline {
             steps {
                 script {
                     echo 'Lancement des tests unitaires...'
-                    bat 'gradlew.bat clean test'  // sur Windows
+                    bat 'gradlew.bat clean test'
 
                     echo 'Archivage des résultats des tests unitaires...'
                     junit 'build/test-results/test/*.xml'
@@ -23,6 +23,20 @@ pipeline {
                         alwaysLinkToLastBuild: true,
                         allowMissing: false
                     ])
+                }
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                script {
+                    echo 'Analyse du code avec SonarQube...'
+                    bat 'gradlew.bat sonarqube'
+                }
+            }
+            post {
+                failure {
+                    echo "Code Analysis failed. Check SonarQube report."
                 }
             }
         }
