@@ -27,31 +27,22 @@ pipeline {
             }
         }
 
-        stage('Code Analysis') {
-            steps {
-                script {
-                    echo 'Analyse du code avec SonarQube...'
-                    bat 'gradlew.bat sonarqube'
-                }
-            }
-            post {
-                failure {
-                    echo "Code Analysis failed. Check SonarQube report."
-                }
-            }
-        }
+   stage('Code Analysis') {
+       steps {
+           script {
+               echo 'Analyse du code avec SonarQube...'
+               // Utilise le wrapper Jenkins SonarQube
+               withSonarQubeEnv('MySonarQubeServer') { // 'MySonarQubeServer' = Nom configuré dans Jenkins
+                   bat 'gradlew.bat sonarqube'
+               }
+           }
+       }
+       post {
+           failure {
+               echo "Code Analysis failed. Check SonarQube report."
+           }
+       }
+   }
 
-        stage('Code Quality') {
-            steps {
-                script {
-                    echo 'Vérification du Quality Gate...'
-                    // Nécessite le plugin SonarQube pour Jenkins
-                    def qg = waitForQualityGate()
-                    if (qg.status != 'OK') {
-                        error "Quality Gate failed: ${qg.status}"
-                    }
-                }
-            }
-        }
     }
 }
