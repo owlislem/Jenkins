@@ -2,6 +2,9 @@ pipeline {
     agent any
 
     stages {
+        // =========================
+        // 1️⃣ TEST UNITAIRES + CUCUMBER
+        // =========================
         stage('Test') {
             steps {
                 script {
@@ -27,22 +30,39 @@ pipeline {
             }
         }
 
-   stage('Code Analysis') {
-       steps {
-           script {
-               echo 'Analyse du code avec SonarQube...'
-               // Utilise le wrapper Jenkins SonarQube
-               withSonarQubeEnv('MySonarQubeServer') { // 'MySonarQubeServer' = Nom configuré dans Jenkins
-                   bat 'gradlew.bat sonarqube'
-               }
-           }
-       }
-       post {
-           failure {
-               echo "Code Analysis failed. Check SonarQube report."
-           }
-       }
-   }
+        // =========================
+        // 2️⃣ ANALYSE SONARQUBE
+        // =========================
+        stage('Code Analysis') {
+            steps {
+                script {
+                    echo 'Analyse du code avec SonarQube...'
+                    // Utilise withSonarQubeEnv pour lier ton serveur configuré dans Jenkins
+                    withSonarQubeEnv('MySonarQubeServer') { // Remplace par le nom de ton serveur Sonar
+                        bat 'gradlew.bat sonarqube'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo "Code Analysis failed. Check SonarQube report."
+                }
+            }
+        }
 
+        // =========================
+        // 3️⃣ VERIFICATION QUALITY GATE
+        // =========================
+        stage('Code Quality') {
+            steps {
+                script {
+                    echo 'Vérification du Quality Gate...'
+                    def qg = waitForQualityGate()
+                    if (qg.status != 'OK') {
+                        error "Quality Gate failed: ${qg.status}"
+                    }
+                }
+            }
+        }
     }
 }
