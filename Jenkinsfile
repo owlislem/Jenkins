@@ -55,7 +55,7 @@ pipeline {
                         echo 'Step 4: Build Phase'
                         echo '======================================'
 
-                        // Step 1: Generate JAR file
+                        // Step 1: Generate JAR fileddd
                         echo 'Génération du fichier JAR...'
                         bat 'gradlew.bat clean build -x test'
 
