@@ -29,7 +29,7 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 script {
-                    echo 'Analyse du code avec SonarQube...'
+                    echo 'Analyse du code avec SonarQube....'
                     // Lier ton serveur Jenkins SonarQube
                     withSonarQubeEnv('MySonarQubeServer') {
                         bat 'gradlew.bat sonarqube'
