@@ -99,7 +99,7 @@ pipeline {
                     <p><b>Erreur :</b> Une ou plusieurs étapes ont échoué.</p>
                     <p><a href="${env.BUILD_URL}console">Voir les logs complets</a></p>
                 """,
-                to: 'amiryeld@gmail.com',
+                to: 'ibchht@gmail.com',
                 mimeType: 'text/html'
             )
         }
