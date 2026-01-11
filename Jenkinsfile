@@ -1,71 +1,43 @@
 pipeline {
     agent any
 
+    environment {
+        EMAIL_RECIPIENTS = 'ibchht@gmail.com'
+    }
+
     stages {
-        stage('Test') {
+        stage('Test Email') {
             steps {
                 script {
-                    echo 'Lancement des tests unitaires...'
-                    bat 'gradlew.bat clean test'
+                    echo '======================================'
+                    echo 'Testing Email Notification'
+                    echo '======================================'
 
-                    echo 'Archivage des résultats des tests unitaires...'
-                    junit 'build/test-results/test/*.xml'
+                    // Test email de succès
+                    def successMessage = """
+✅ TEST EMAIL - SUCCÈS
 
-                    echo 'Génération des rapports Cucumber...'
-                    bat 'gradlew.bat generateCucumberReports'
+Projet: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Date: ${new Date()}
+URL: ${env.BUILD_URL}
 
-                    publishHTML(target: [
-                        reportName: 'Cucumber Report',
-                        reportDir: 'build/reports/cucumber/cucumber-html-reports',
-                        reportFiles: 'overview-features.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: false
-                    ])
-                }
-            }
-        }
+Ceci est un email de test.
+Si vous recevez cet email, la configuration fonctionne! 🎉
 
-        stage('Code Analysis') {
-            steps {
-                script {
-                    echo 'Analyse du code avec SonarQube....'
-                    withSonarQubeEnv('MySonarQubeServer') {
-                        bat 'gradlew.bat sonarqube'
-                    }
-                }
-            }
-        }
+Artefacts (exemple):
+- JAR: ${env.BUILD_URL}artifact/
+- Javadoc: ${env.BUILD_URL}Javadoc/
+                    """
 
-        stage('Code Quality') {
-            steps {
-                script {
-                    echo 'Vérification du Quality Gate...'
-                    def qg = waitForQualityGate() // bloque jusqu'à cdsade que SonarQube ait fini
-                    if (qg.status != 'OK') {
-                        error "Quality Gate failed: ${qg.status}"
-                    }
-                }
-            }
-        }
+                    emailext(
+                        subject: "✅ TEST SUCCESS: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
+                        body: successMessage,
+                        to: "${EMAIL_RECIPIENTS}",
+                        mimeType: 'text/plain'
+                    )
 
-        stage('Build') {
-            steps {
-                script {
-                    echo 'Génération du JAR, documentation et archivage...'
-                    bat 'gradlew.bat jar javadoc archiveBuild'
-
-                    echo 'Les fichiers JAR et la documentation ont été archivés dans build/archive.'
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    echo 'Déploiement du JAR sur mymavenrepo.com...'
-                    bat 'gradlew.bat publish'
-                    echo 'Déploiement terminé avec succès.'
+                    echo '✓ Email de test envoyé avec succès!'
                 }
             }
         }
@@ -73,40 +45,60 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline réussi !'
+            script {
+                echo '======================================'
+                echo 'Email SUCCESS envoyé depuis post block'
+                echo '======================================'
 
-            emailext (
-                subject: "✅ Build Réussi - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>✅ Build Réussi</h2>
-                    <p><b>Projet :</b> ${env.JOB_NAME}</p>
-                    <p><b>Build n° :</b> ${env.BUILD_NUMBER}</p>
-                    <p><b>Date :</b> ${new Date()}</p>
-                    <p><a href="${env.BUILD_URL}">Voir les détails du build</a></p>
-                """,
-                to: 'amiryeld@gmail.com',   // <- your recipient
-                from: 'amiryeld@gmail.com', // <- must match your SMTP account
-                mimeType: 'text/html'
-            )
+                emailext(
+                    subject: "✅ POST SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+✅ NOTIFICATION DE SUCCÈS (POST BLOCK)
+
+Le build s'est terminé avec succès!
+
+Projet: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Durée: ${currentBuild.durationString}
+
+Ce message vient du bloc 'post { success }'
+                    """,
+                    to: "${EMAIL_RECIPIENTS}"
+                )
+            }
         }
 
         failure {
-            echo '❌ Pipeline échoué !'
+            script {
+                echo '======================================'
+                echo 'Email FAILURE envoyé depuis post block'
+                echo '======================================'
 
-            emailext (
-                subject: "❌ Build Échoué - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>❌ Build Échoué</h2>
-                    <p><b>Projet :</b> ${env.JOB_NAME}</p>
-                    <p><b>Build n° :</b> ${env.BUILD_NUMBER}</p>
-                    <p><b>Erreur :</b> Une ou plusieurs étapes ont échoué.</p>
-                    <p><a href="${env.BUILD_URL}console">Voir les logs complets</a></p>
-                """,
-                to: 'amiryeld@gmail.com',   // <- your recipient
-                from: 'amiryeld@gmail.com', // <- must match your SMTP account
-                mimeType: 'text/html'
-            )
+                emailext(
+                    subject: "❌ POST FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+❌ NOTIFICATION D'ÉCHEC (POST BLOCK)
+
+Le build a échoué!
+
+Projet: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Phase échouée: ${env.STAGE_NAME}
+
+Logs: ${env.BUILD_URL}console
+
+Intervention requise! 🚨
+                    """,
+                    to: "${EMAIL_RECIPIENTS}",
+                    attachLog: true
+                )
+            }
+        }
+
+        always {
+            script {
+                echo "Build terminé avec statut: ${currentBuild.result ?: 'SUCCESS'}"
+            }
         }
     }
-
 }
