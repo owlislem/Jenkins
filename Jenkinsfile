@@ -74,6 +74,7 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline réussi !'
+
             emailext (
                 subject: "✅ Build Réussi - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
@@ -83,13 +84,15 @@ pipeline {
                     <p><b>Date :</b> ${new Date()}</p>
                     <p><a href="${env.BUILD_URL}">Voir les détails du build</a></p>
                 """,
-                to: 'amiryeld@gmail.com',
+                to: 'amiryeld@gmail.com',   // <- your recipient
+                from: 'amiryeld@gmail.com', // <- must match your SMTP account
                 mimeType: 'text/html'
             )
         }
 
         failure {
             echo '❌ Pipeline échoué !'
+
             emailext (
                 subject: "❌ Build Échoué - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
@@ -99,9 +102,11 @@ pipeline {
                     <p><b>Erreur :</b> Une ou plusieurs étapes ont échoué.</p>
                     <p><a href="${env.BUILD_URL}console">Voir les logs complets</a></p>
                 """,
-                to: 'ibchht@gmail.com',
+                to: 'amiryeld@gmail.com',   // <- your recipient
+                from: 'amiryeld@gmail.com', // <- must match your SMTP account
                 mimeType: 'text/html'
             )
         }
     }
+
 }
