@@ -41,7 +41,7 @@ pipeline {
             steps {
                 script {
                     echo 'Vérification du Quality Gate...'
-                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube ait fini
+                    def qg = waitForQualityGate() // bloque jusqu'à cdsade que SonarQube ait fini
                     if (qg.status != 'OK') {
                         error "Quality Gate failed: ${qg.status}"
                     }
