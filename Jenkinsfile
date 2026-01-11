@@ -30,7 +30,7 @@ pipeline {
             steps {
                 script {
                     echo 'Analyse du code avec SonarQube....'
-                    // Lier ton serveur Jenkins SonarQubed
+                    // Lier ton serveur Jenkins SonarQubedaa
                     withSonarQubeEnv('MySonarQubeServer') {
                         bat 'gradlew.bat sonarqube'
                     }
