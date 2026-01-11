@@ -59,15 +59,14 @@ publishing {
 
     repositories {
         maven {
-            url = uri(System.getenv("MAVEN_REPO_URL")) // use env var
+            url = uri("https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/")
             credentials {
-                username = System.getenv("MAVEN_REPO_USERNAME") // use env var
-                password = System.getenv("MAVEN_REPO_PASSWORD") // use env var
+                username = "myMavenRepo"
+                password = "test0005"
             }
         }
     }
 }
-
 
 
 task archiveBuild(type: Copy) {
