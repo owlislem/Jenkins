@@ -1,50 +1,47 @@
 pipeline {
     agent any
 
-    environment {
-        MAVEN_REPO_URL = "https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/"
-        EMAIL_FROM = "amiryeld@gmail.com"
-        EMAIL_TO = "amiryeld@gmail.com"
-    }
-
     stages {
-
         stage('Test') {
             steps {
-                echo '🏃 Lancement des tests unitaires...'
-                bat 'gradlew.bat clean test'
+                script {
+                    echo 'Lancement des tests unitaires...'
+                    bat 'gradlew.bat clean test'
 
-                echo '📂 Archivage des résultats des tests unitaires...'
-                junit 'build/test-results/test/*.xml'
+                    echo 'Archivage des résultats des tests unitaires...'
+                    junit 'build/test-results/test/*.xml'
 
-                echo '📊 Génération des rapports Cucumber...'
-                bat 'gradlew.bat generateCucumberReports'
+                    echo 'Génération des rapports Cucumber...'
+                    bat 'gradlew.bat generateCucumberReports'
 
-                publishHTML(target: [
-                    reportName: 'Cucumber Report',
-                    reportDir: 'build/reports/cucumber/cucumber-html-reports',
-                    reportFiles: 'overview-features.html',
-                    keepAll: true,
-                    alwaysLinkToLastBuild: true,
-                    allowMissing: false
-                ])
+                    publishHTML(target: [
+                        reportName: 'Cucumber Report',
+                        reportDir: 'build/reports/cucumber/cucumber-html-reports',
+                        reportFiles: 'overview-features.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: false
+                    ])
+                }
             }
         }
 
         stage('Code Analysis') {
             steps {
-                echo '🔍 Analyse du code avec SonarQube...'
-                withSonarQubeEnv('MySonarQubeServer') {
-                    bat 'gradlew.bat sonarqube'
+                script {
+                    echo 'Analyse du code avec SonarQube....'
+                    withSonarQubeEnv('MySonarQubeServer') {
+                        bat 'gradlew.bat sonarqube'
+                    }
                 }
             }
         }
 
         stage('Code Quality') {
             steps {
-                echo '📈 Vérification du Quality Gate...'
                 script {
-                    def qg = waitForQualityGate()
+                    echo 'Vérification du Quality Gate...'
+                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube ait fini
                     if (qg.status != 'OK') {
                         error "Quality Gate failed: ${qg.status}"
                     }
@@ -54,19 +51,21 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo '⚙️ Génération du JAR et de la documentation...'
-                bat 'gradlew.bat jar javadoc'
+                script {
+                    echo 'Génération du JAR, documentation et archivage...'
+                    bat 'gradlew.bat jar javadoc archiveBuild'
 
-                echo '📦 Archivage du JAR et Javadoc...'
-                bat 'gradlew.bat archiveBuild'
+                    echo 'Les fichiers JAR et la documentation ont été archivés dans build/archive.'
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo '🚀 Déploiement sur Maven repository...'
-                withCredentials([usernamePassword(credentialsId: 'MY_MAVEN_CREDS', usernameVariable: 'MAVEN_REPO_USERNAME', passwordVariable: 'MAVEN_REPO_PASSWORD')]) {
+                script {
+                    echo 'Déploiement du JAR sur mymavenrepo.com...'
                     bat 'gradlew.bat publish'
+                    echo 'Déploiement terminé avec succès.'
                 }
             }
         }
@@ -75,7 +74,6 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline réussi !'
-
             emailext (
                 subject: "✅ Build Réussi - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
@@ -85,14 +83,13 @@ pipeline {
                     <p><b>Date :</b> ${new Date()}</p>
                     <p><a href="${env.BUILD_URL}">Voir les détails du build</a></p>
                 """,
-                to: EMAIL_TO,
+                to: 'amiryeld@gmail.com',
                 mimeType: 'text/html'
             )
         }
 
         failure {
             echo '❌ Pipeline échoué !'
-
             emailext (
                 subject: "❌ Build Échoué - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
@@ -102,7 +99,7 @@ pipeline {
                     <p><b>Erreur :</b> Une ou plusieurs étapes ont échoué.</p>
                     <p><a href="${env.BUILD_URL}console">Voir les logs complets</a></p>
                 """,
-                to: EMAIL_TO,
+                to: 'amiryeld@gmail.com',
                 mimeType: 'text/html'
             )
         }
