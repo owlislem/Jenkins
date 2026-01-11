@@ -1,87 +1,87 @@
-pipeline {
-    agent any
+plugins {
+    id 'java'
+    id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
+    id 'jacoco'
+    id "org.sonarqube" version "4.4.1.3373"
+    id "maven-publish"
+}
 
-    environment {
-        // Maven repository URL
-        MAVEN_REPO_URL = "https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/"
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'io.cucumber:cucumber-java:6.0.0'
+    testImplementation 'io.cucumber:cucumber-junit:6.0.0'
+    testImplementation 'junit:junit:4.12'
+
+}
+
+
+cucumberReports {
+    outputDir = file('build/reports/cucumber')
+    buildId = '0'
+    reports = files('reports/example-report.json')
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "ogl"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.login", "df4bc2c25b4bfe095ebe0c68498f2d96e2b7777d"
     }
 
-    stages {
-        stage('Test') {
-            steps {
-                script {
-                    echo 'Lancement des tests unitaires...'
-                    bat 'gradlew.bat clean test'
+}
 
-                    echo 'Archivage des résultats des tests unitaires...'
-                    junit 'build/test-results/test/*.xml'
+javadoc {
+    dependsOn test
+}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = "islam"
+            artifactId = "jar"
+            version = "1.0.0"
 
-                    echo 'Génération des rapports Cucumber...'
-                    bat 'gradlew.bat generateCucumberReports'
-
-                    publishHTML(target: [
-                            reportName: 'Cucumber Report',
-                            reportDir: 'build/reports/cucumber/cucumber-html-reports',
-                            reportFiles: 'overview-features.html',
-                            keepAll: true,
-                            alwaysLinkToLastBuild: true,
-                            allowMissing: false
-                    ])
-                }
-            }
+            from components.java
         }
+    }
 
-        stage('Code Analysis') {
-            steps {
-                script {
-                    echo 'Analyse du code avec SonarQube...'
-                    withSonarQubeEnv('MySonarQubeServer') {
-                        bat 'gradlew.bat sonarqube'
-                    }
-                }
-            }
-        }
-
-        stage('Code Quality') {
-            steps {
-                script {
-                    echo 'Vérification du Quality Gate...'
-                    def qg = waitForQualityGate() // Bloque jusqu'à ce que SonarQube ait fini
-                    if (qg.status != 'OK') {
-                        error "Quality Gate failed: ${qg.status}"
-                    }
-                }
-            }
-        }
-
-        stage('Build') {
-            steps {
-                script {
-                    echo 'Génération du fichier JAR...'
-                    bat 'gradlew.bat jar'
-
-                    echo 'Génération de la documentation...'
-                    bat 'gradlew.bat javadoc'
-
-                    echo 'Archivage du fichier JAR et de la documentation...'
-                    bat 'gradlew.bat archiveBuild'
-
-                    // Optionally, publish archive as artifact in Jenkins
-                    archiveArtifacts artifacts: 'build/archive/**', fingerprint: true
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    echo 'Déploiement sur Maven repository...'
-                    withCredentials([usernamePassword(credentialsId: 'MY_MAVEN_CREDS', usernameVariable: 'MAVEN_REPO_USERNAME', passwordVariable: 'MAVEN_REPO_PASSWORD')]) {
-                        // Gradle will read MAVEN_REPO_URL, MAVEN_REPO_USERNAME, MAVEN_REPO_PASSWORD
-                        bat 'gradlew.bat publish -PmavenRepoUrl=%MAVEN_REPO_URL% -PmavenUsername=%MAVEN_REPO_USERNAME% -PmavenPassword=%MAVEN_REPO_PASSWORD%'
-                    }
-                }
+    repositories {
+        maven {
+            url = uri(System.getenv("MAVEN_REPO_URL")) // use env var
+            credentials {
+                username = System.getenv("MAVEN_REPO_USERNAME") // use env var
+                password = System.getenv("MAVEN_REPO_PASSWORD") // use env var
             }
         }
     }
+}
+
+
+
+task archiveBuild(type: Copy) {
+    description = 'Archives the JAR and Javadoc'
+    group = 'Build'
+
+    dependsOn jar, javadoc // make sure JAR and Javadoc are created first
+
+    // copy the JAR file
+    from("build/libs/${jar.archiveFileName.get()}")
+
+    // copy the Javadoc folder
+    from("build/docs/javadoc")
+
+    // put everything in a fixed folder
+    into("build/archive")
 }
