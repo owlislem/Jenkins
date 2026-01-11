@@ -30,7 +30,6 @@ pipeline {
             steps {
                 script {
                     echo 'Analyse du code avec SonarQube....'
-                    // Lier ton serveur Jenkins SonarQubedaa
                     withSonarQubeEnv('MySonarQubeServer') {
                         bat 'gradlew.bat sonarqube'
                     }
@@ -42,13 +41,23 @@ pipeline {
             steps {
                 script {
                     echo 'Vérification du Quality Gate...'
-                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube aitf
+                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube ait fini
                     if (qg.status != 'OK') {
                         error "Quality Gate failed: ${qg.status}"
                     }
                 }
             }
+        }
 
+        stage('Build') {
+            steps {
+                script {
+                    echo 'Génération du fichier JAR, de la documentation et archivage...'
+                    bat 'gradlew.bat jar javadoc archiveBuild'
+
+                    echo 'Les fichiers JAR et la documentation ont été archivés avec succès dans build/archive.'
+                }
+            }
         }
     }
 }

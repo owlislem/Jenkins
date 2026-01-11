@@ -69,3 +69,18 @@ publishing {
 }
 
 
+task archiveBuild(type: Copy) {
+    description = 'Archives the JAR and Javadoc'
+    group = 'Build'
+
+    dependsOn jar, javadoc // make sure JAR and Javadoc are created first
+
+    // copy the JAR file
+    from("build/libs/${jar.archiveFileName.get()}")
+
+    // copy the Javadoc folder
+    from("build/docs/javadoc")
+
+    // put everything in a fixed folder
+    into("build/archive")
+}
