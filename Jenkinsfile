@@ -38,11 +38,16 @@ pipeline {
             }
         }
 
-       stage('Code Quality') {
-           steps {
-               echo 'Vérification du Quality Gate...'
-               timeout(time: 3, unit: 'MINUTES') {
-                   waitForQualityGate abortPipeline: true
-               }
-           }
-       }
+        stage('Code Quality') {
+            steps {
+                script {
+                    echo 'Vérification du Quality Gate...'
+                    def qg = waitForQualityGate() // bloque jusqu'à ce que SonarQube ait fisnis
+                    if (qg.status != 'OK') {
+                        error "Quality Gate failed: ${qg.status}"
+                    }
+                }
+            }
+        }
+    }
+}
