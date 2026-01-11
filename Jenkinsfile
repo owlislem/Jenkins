@@ -13,7 +13,7 @@ pipeline {
                     echo 'Testing Email Notification'
                     echo '======================================'
 
-                    // Test email de succès
+                    // Test email de succèsdd
                     def successMessage = """
 ✅ TEST EMAIL - SUCCÈS
 
