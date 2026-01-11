@@ -52,10 +52,20 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    echo 'Génération du fichier JAR, de la documentation et archivage...'
+                    echo 'Génération du JAR, documentation et archivage...'
                     bat 'gradlew.bat jar javadoc archiveBuild'
 
-                    echo 'Les fichiers JAR et la documentation ont été archivés avec succès dans build/archive.'
+                    echo 'Les fichiers JAR et la documentation ont été archivés dans build/archive.'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo 'Déploiement du JAR sur mymavenrepo.com...'
+                    bat 'gradlew.bat publish'
+                    echo 'Déploiement terminé avec succès.'
                 }
             }
         }
