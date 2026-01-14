@@ -129,7 +129,7 @@ Version: ${project.version}
 Groupe: ${project.group}
 Date: ${new Date()}
 
-La librairie a ete deployee avec succes.
+La librairie a ete deployee avec successss.
             """
 
             message.setText(textContent)
