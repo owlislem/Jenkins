@@ -89,7 +89,7 @@ pipeline {
                  subject: "Failed: ${currentBuild.fullDisplayName}",
                  body: "The pipeline failed in stage: ${env.STAGE_NAME}"
 
-            // Slack Notification failure
+            // Slack Notification failhure
             slackSend color: 'danger',
                       channel: 'tp_ogl_gradle', // CHANGE THIS to your actual channel name
                       message: "Build Failed: ${currentBuild.fullDisplayName} in stage ${env.STAGE_NAME} (<${env.BUILD_URL}|Open>)"
