@@ -51,11 +51,16 @@ pipeline {
 
         stage('Build') {
             steps {
-                script {
-                    echo 'Génération du JAR, documentation et archivage...'
-                    bat 'gradlew.bat jar javadoc archiveBuild'
+                // 1. Génération du fichier Jar
+                bat 'gradlew assemble'
 
-                    echo 'Les fichiers JAR et la documentation ont été archivés dans build/archive.'
+                // 2. Génération de la documentation
+                bat 'gradlew javadoc'
+            }
+            post {
+                success {
+                    // 3. Archivage du fichier Jar et de la documentation
+                    archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**'
                 }
             }
         }
